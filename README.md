@@ -58,7 +58,7 @@ backend/
 
 ### 1. Clone the repository
 ```
-git clone <your-repo-url>
+git clone https://github.com/Azer-ch/web-scraper-backend 
 cd backend
 ```
 
