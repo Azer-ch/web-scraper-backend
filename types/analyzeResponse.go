@@ -1,9 +1,5 @@
 package types
 
-type AnalyzeRequest struct {
-	URL string `json:"url" binding:"required"`
-}
-
 type AnalyzeResponse struct {
 	HTMLVersion       string         `json:"html_version"`
 	Title             string         `json:"title"`
