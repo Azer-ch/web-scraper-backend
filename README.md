@@ -59,7 +59,7 @@ backend/
 ### 1. Clone the repository
 ```
 git clone https://github.com/Azer-ch/web-scraper-backend 
-cd backend
+cd web-scraper-backend
 ```
 
 ### 2. Install Go dependencies
