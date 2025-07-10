@@ -32,37 +32,37 @@ func HashURL(url string) []byte {
 	return hash[:]
 }
 
-func GetCachedResult(url string) (*types.AnalyzeResponse, error) {
+func GetCachedResult(url string) (*types.AnalyzeResponse, uint, error) {
 	if db == nil {
 		if err := InitDB(); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
 	var cache types.Analysis
 	urlHash := HashURL(url)
 	result := db.Where("url_hash = ?", urlHash).First(&cache)
 	if result.Error != nil {
-		return nil, nil
+		return nil, 0, nil
 	}
 	if time.Since(cache.AnalyzedAt) > 24*time.Hour {
-		return nil, nil
+		return nil,0, nil
 	}
 	var resp types.AnalyzeResponse
 	if err := json.Unmarshal([]byte(cache.Result), &resp); err != nil {
-		return nil, err
+		return nil, 0,err
 	}
-	return &resp, nil
+	return &resp, cache.ID, nil
 }
 
-func SetCachedResult(url string, result *types.AnalyzeResponse) error {
+func SetCachedResult(url string, result *types.AnalyzeResponse) (uint, error) {
 	if db == nil {
 		if err := InitDB(); err != nil {
-			return err
+			return 0, err
 		}
 	}
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	urlHash := HashURL(url)
 	cache := types.Analysis{
@@ -71,7 +71,7 @@ func SetCachedResult(url string, result *types.AnalyzeResponse) error {
 		Result:     string(resultBytes),
 		AnalyzedAt: time.Now(),
 	}
-	return db.Clauses(clause.OnConflict{
+	return cache.ID, db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "url_hash"}},
 		DoUpdates: clause.AssignmentColumns([]string{"result", "analyzed_at", "url"}),
 	}).Create(&cache).Error

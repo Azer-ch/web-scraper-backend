@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 func AnalyzeHandler(c *gin.Context) {
 	var req types.AnalyzeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -14,13 +15,23 @@ func AnalyzeHandler(c *gin.Context) {
 		return
 	}
 
-	cached, err := helpers.GetCachedResult(req.URL)
+	cached, id, err := helpers.GetCachedResult(req.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cache error: " + err.Error()})
 		return
 	}
 	if cached != nil {
-		c.JSON(http.StatusOK, cached)
+		response := types.AnalyzeAPIResponse{
+			ID:                id,
+			HTMLVersion:       cached.HTMLVersion,
+			Title:             cached.Title,
+			Headings:          cached.Headings,
+			InternalLinks:     cached.InternalLinks,
+			ExternalLinks:     cached.ExternalLinks,
+			InaccessibleLinks: cached.InaccessibleLinks,
+			HasLoginForm:      cached.HasLoginForm,
+		}
+		c.JSON(http.StatusOK, response)
 		return
 	}
 
@@ -29,11 +40,20 @@ func AnalyzeHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	err = helpers.SetCachedResult(req.URL, resp)
+	id, err = helpers.SetCachedResult(req.URL, resp)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, resp)
+	response := types.AnalyzeAPIResponse{
+		ID:                id,
+		HTMLVersion:       resp.HTMLVersion,
+		Title:             resp.Title,
+		Headings:          resp.Headings,
+		InternalLinks:     resp.InternalLinks,
+		ExternalLinks:     resp.ExternalLinks,
+		InaccessibleLinks: resp.InaccessibleLinks,
+		HasLoginForm:      resp.HasLoginForm,
+	}
+	c.JSON(http.StatusOK, response)
 }
